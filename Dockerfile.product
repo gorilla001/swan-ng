@@ -1,0 +1,5 @@
+FROM progrium/busybox
+MAINTAINER Guangzheng Zhang <zhang.elinks@gmail.com>
+WORKDIR /
+COPY bin/swan  /swan
+CMD ["/swan", "manager"]
