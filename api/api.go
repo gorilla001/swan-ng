@@ -31,7 +31,7 @@ func Serve(mc *types.MgrConfig) (err error) {
 	*cfg = *mc
 
 	// setup mesos client & startup mesos events subscriber
-	mesosCli, err = mesos.NewClient(mc.MesosZKPath)
+	mesosCli, err = mesos.NewClient(mc.MesosURL)
 	if err != nil {
 		return fmt.Errorf("initialize mesos client error: [%v]", err)
 	}
@@ -40,7 +40,7 @@ func Serve(mc *types.MgrConfig) (err error) {
 	}
 
 	// setup swan db store
-	if url := cfg.ZKPath; url == nil {
+	if url := cfg.ZKURL; url == nil {
 		err = store.Setup("memory", nil)
 	} else {
 		err = store.Setup("zk", url)
@@ -53,7 +53,7 @@ func Serve(mc *types.MgrConfig) (err error) {
 	mux := mux.New()
 	setupRouters(mux)
 	server := http.Server{
-		Addr:    cfg.ListenAddr,
+		Addr:    cfg.Listen,
 		Handler: mux,
 	}
 

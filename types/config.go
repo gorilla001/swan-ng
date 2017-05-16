@@ -1,35 +1,30 @@
 package types
 
 import (
-	"errors"
 	"fmt"
 	"net/url"
 )
 
 // MgrConfig represents manager configs
 type MgrConfig struct {
-	ListenAddr  string   `json:"listen_addr"`
-	MesosZKPath *url.URL `json:"mesos_zk_path"` // mesos zk addr
-	ZKPath      *url.URL `json:"zk_path"`       // swan zk store addr, if null, use memory store
+	Listen   string   `json:"listen"`
+	MesosURL *url.URL `json:"mesos"` // mesos zk addr
+	ZKURL    *url.URL `json:"zk"`    // swan zk store addr, if null, use memory store
 }
 
 // Valid verify the manager configs
 func (c *MgrConfig) Valid() error {
-	if c.ListenAddr == "" {
-		return errors.New("listen param required")
+	if c.Listen == "" {
+		return fmt.Errorf("listen param required")
 	}
 
-	p := c.MesosZKPath
-	if p == nil {
-		return errors.New("mesos zk_path param required")
-	}
-	if err := validZKURL(p); err != nil {
-		return fmt.Errorf("mesos zk path invalid: %v", err)
+	if err := validZKURL(c.MesosURL); err != nil {
+		return fmt.Errorf("mesos zk url invalid: %v", err)
 	}
 
-	if p := c.ZKPath; p != nil {
+	if p := c.ZKURL; p != nil {
 		if err := validZKURL(p); err != nil {
-			return fmt.Errorf("swan zk path invalid: %v", err)
+			return fmt.Errorf("swan zk url invalid: %v", err)
 		}
 	}
 

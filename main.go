@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/url"
 	"os"
 
@@ -23,7 +24,7 @@ var (
 
 	managerFlags = []cli.Flag{
 		cli.StringFlag{
-			Name:   "listen-addr",
+			Name:   "listen",
 			Usage:  "http listener address",
 			EnvVar: "SWAN_LISTEN_ADDR",
 			Value:  "0.0.0.0:9999",
@@ -94,25 +95,41 @@ func main() {
 
 func newMgrCfg(c *cli.Context) (*types.MgrConfig, error) {
 	var (
-		listen  = c.String("listen-addr")
-		mesosZK = c.String("mesos")
-		zk      = c.String("zk")
-		err     error
+		listen = c.String("listen")
+		mesos  = c.String("mesos")
+		zk     = c.String("zk")
+		err    error
 	)
 
-	cfg := &types.MgrConfig{
-		ListenAddr: listen,
+	if listen == "" {
+		listen = "0.0.0.0:9999"
 	}
 
-	if cfg.MesosZKPath, err = url.Parse(mesosZK); err != nil {
+	if mesos == "" {
+		return nil, fmt.Errorf("--mesos is required, but is was not provided.")
+	}
+
+	if zk == "" {
+		log.Info("--zk is not provided, swan will run in standalone.")
+	}
+
+	cfg := &types.MgrConfig{
+		Listen: listen,
+	}
+
+	if cfg.MesosURL, err = url.Parse(mesos); err != nil {
 		return nil, err
 	}
 
 	if zk != "" { // allow null, if null, use memory store
-		if cfg.ZKPath, err = url.Parse(zk); err != nil {
+		if cfg.ZKURL, err = url.Parse(zk); err != nil {
 			return nil, err
 		}
 	}
 
-	return cfg, cfg.Valid()
+	if err := cfg.Valid(); err != nil {
+		return nil, err
+	}
+
+	return cfg, nil
 }
