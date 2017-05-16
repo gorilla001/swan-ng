@@ -1,31 +1,77 @@
 package memory
 
 import (
+	"errors"
+
 	"github.com/bbklab/swan-ng/types"
 )
 
-// CreateApp ...
+var (
+	ErrAppNotExists = errors.New("app does not exist")
+)
+
+// CreateApp creates new app.
 func (s *Store) CreateApp(app *types.App) error {
+	s.Lock()
+	defer s.Unlock()
+
+	s.apps[app.ID] = app
+
 	return nil
 }
 
-// UpdateApp ...
+// UpdateApp update app information.
 func (s *Store) UpdateApp(app *types.App) error {
+	s.Lock()
+	defer s.Unlock()
+
+	if _, exists := s.apps[app.ID]; !exists {
+		return ErrAppNotExists
+	}
+
+	s.apps[app.ID] = app
+
 	return nil
 }
 
-// GetApp ...
+// GetApp get specified app by app id.
 func (s *Store) GetApp(id string) (*types.App, error) {
-	return nil, nil
+	s.RLock()
+	defer s.RUnlock()
+
+	app, exists := s.apps[id]
+	if !exists {
+		return nil, ErrAppNotExists
+	}
+
+	return app, nil
 }
 
-// ListApps ...
+// ListApps list all apps.
 func (s *Store) ListApps() ([]*types.App, error) {
-	return nil, nil
+	s.RLock()
+	defer s.RUnlock()
+
+	apps := make([]*types.App, 0, len(s.apps))
+
+	for _, v := range s.apps {
+		apps = append(apps, v)
+	}
+
+	return apps, nil
 }
 
-// DeleteApp ...
+// DeleteApp delete app by app id.
 func (s *Store) DeleteApp(id string) error {
+	s.Lock()
+	defer s.Unlock()
+
+	if _, exists := s.apps[id]; !exists {
+		return ErrAppNotExists
+	}
+
+	delete(s.apps, id)
+
 	return nil
 }
 
