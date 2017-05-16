@@ -26,16 +26,13 @@ type Store struct {
 // New ...
 // TODO test if need reconnect logic
 func New(url *url.URL) (*Store, error) {
-	hosts := strings.Split(url.Host, ",")
-	conn, _, err := zk.Connect(hosts, 5*time.Second)
-	if err != nil {
-		return nil, err
+	s := &Store{
+		url: url,
+		acl: zk.WorldACL(zk.PermAll),
 	}
 
-	s := &Store{
-		url:  url,
-		conn: conn,
-		acl:  zk.WorldACL(zk.PermAll),
+	if err := s.initConnection(); err != nil {
+		return nil, err
 	}
 
 	// create base keys nodes
@@ -46,6 +43,26 @@ func New(url *url.URL) (*Store, error) {
 	}
 
 	return s, nil
+}
+
+func (s *Store) initConnection() error {
+	hosts := strings.Split(s.url.Host, ",")
+	conn, connCh, err := zk.Connect(hosts, 5*time.Second)
+	if err != nil {
+		return err
+	}
+
+	// waiting for zookeeper to be connected.
+	for event := range connCh {
+		if event.State == zk.StateConnected {
+			log.Info("connected to zookeeper succeed.")
+			break
+		}
+	}
+
+	s.conn = conn
+
+	return nil
 }
 
 // with the prefix `s.url.Path` and clean the path
