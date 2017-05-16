@@ -52,7 +52,7 @@ func (s *Store) ListApps() ([]*types.App, error) {
 	s.RLock()
 	defer s.RUnlock()
 
-	apps := make([]*types.App, len(s.apps))
+	apps := make([]*types.App, 0, len(s.apps))
 
 	for _, v := range s.apps {
 		apps = append(apps, v)
