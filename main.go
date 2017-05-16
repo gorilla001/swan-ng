@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/url"
 	"os"
 
@@ -94,25 +95,37 @@ func main() {
 
 func newMgrCfg(c *cli.Context) (*types.MgrConfig, error) {
 	var (
-		listen  = c.String("listen-addr")
-		mesosZK = c.String("mesos")
-		zk      = c.String("zk")
-		err     error
+		listen = c.String("listen-addr")
+		mesos  = c.String("mesos")
+		zk     = c.String("zk")
+		err    error
 	)
 
-	cfg := &types.MgrConfig{
-		ListenAddr: listen,
+	if mesos == "" {
+		return nil, fmt.Errorf("--mesos is required, but is was not provided.")
 	}
 
-	if cfg.MesosZKPath, err = url.Parse(mesosZK); err != nil {
+	if zk == "" {
+		log.Info("--zk is not provided, swan will run in standalone.")
+	}
+
+	cfg := &types.MgrConfig{
+		Listen: listen,
+	}
+
+	if cfg.MesosURL, err = url.Parse(mesos); err != nil {
 		return nil, err
 	}
 
 	if zk != "" { // allow null, if null, use memory store
-		if cfg.ZKPath, err = url.Parse(zk); err != nil {
+		if cfg.ZKURL, err = url.Parse(zk); err != nil {
 			return nil, err
 		}
 	}
 
-	return cfg, cfg.Valid()
+	if err := cfg.Valid(); err != nil {
+		return nil, err
+	}
+
+	return cfg, nil
 }
