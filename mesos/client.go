@@ -151,7 +151,7 @@ func (c *Client) Subscribe() error {
 		resp.Body.Close()
 		return fmt.Errorf("subscribe with unexpected response [%d] - [%s]", code, string(bs))
 	}
-	log.Printf("subscribed to mesos leader: %s", c.endPoint)
+	log.Printf("subscribed to mesos leader: %s succeed.", c.endPoint)
 
 	go c.watchEvents(resp)
 	return nil
@@ -165,15 +165,12 @@ func (c *Client) watchEvents(resp *http.Response) {
 		resp.Body.Close()
 	}()
 
-	var (
-		dec = json.NewDecoder(resp.Body)
-		ev  = new(sched.Event)
-		err error
-	)
+	r := NewReader(resp.Body)
+	dec := json.NewDecoder(r)
 
 	for {
-		err = dec.Decode(&ev)
-		if err != nil {
+		ev := new(sched.Event)
+		if err := dec.Decode(ev); err != nil {
 			log.Errorln("mesos events subscriber decode events error:", err)
 			c.errCh <- err
 			return
