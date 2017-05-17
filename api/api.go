@@ -13,7 +13,7 @@ import (
 
 const (
 	// APIPREFIX is exported
-	APIPREFIX = "/api"
+	APIPREFIX = "/v1"
 )
 
 // package scope instances
@@ -69,6 +69,7 @@ func setupRouters(m *mux.Mux) {
 	m.Get("/version", showVersion)
 
 	// apps
+	m.Post("/apps", createApp)
 	m.Get("/apps", listApps)
 	m.Get("/apps/:id", getApp)
 	//m.Delete("/apps/:id", delApp)

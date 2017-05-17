@@ -80,6 +80,10 @@ func (c *Client) Cluster() string {
 	return c.cluster
 }
 
+func (c *Client) FrameworkId() *mesos.FrameworkID {
+	return c.framework.Id
+}
+
 // Send send mesos request against the mesos master's scheduler api endpoint.
 // NOTE it's the caller's responsibility to deal with the Send() error
 func (c *Client) Send(call *sched.Call) error {
