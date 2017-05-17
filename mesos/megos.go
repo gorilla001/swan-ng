@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/andygrunwald/megos"
 	"github.com/bbklab/swan-ng/mesos/protobuf/mesos"
 	"github.com/samuel/go-zookeeper/zk"
@@ -42,11 +43,19 @@ func (c *Client) FrameworkState() (*megos.Framework, error) {
 // megosClient is just a helper mesos http client via vendor `andygrunwald/megos` which
 // only `GET` on mesos http endpoints, we only use it to obtain cluster's states quickly.
 func (c *Client) megosClient() (*megos.Client, error) {
-	conn, _, err := zk.Connect(strings.Split(c.zkPath.Host, ","), 10*time.Second)
+	conn, connCh, err := zk.Connect(strings.Split(c.zkPath.Host, ","), 10*time.Second)
 	if err != nil {
 		return nil, err
 	}
 	defer conn.Close()
+
+	// waiting for zookeeper to be connected.
+	for event := range connCh {
+		if event.State == zk.StateConnected {
+			log.Info("connected to zookeeper succeed.")
+			break
+		}
+	}
 
 	var (
 		masters    = make([]*url.URL, 0)
